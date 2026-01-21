@@ -54,7 +54,7 @@ st.divider()
 # =========================
 # ✅ MAĞAZA (TEK INPUT) + seçili değilken TÜM TÜRKİYE
 # =========================
-st.subheader("Mağaza (Google gibi arama)")
+st.subheader("Mağaza Seçimi")
 
 if len(magazalar) == 0:
     st.error("Mağaza bulunamadı. TIPI alanında 'Magaza' yazdığından emin ol.")
@@ -103,14 +103,14 @@ if secili_magaza is not None:
         "BOYLAM": secili_magaza["BOYLAM"],
     }]), use_container_width=True)
 else:
-    st.info("Mağaza seçili değil → aşağıda tüm Türkiye (tüm mağazalar + üreticiler) görünür.")
+    st.info("Mağaza seçili değil ise, tüm Türkiye görünür.")
 
 st.divider()
 
 # =========================
 # ✅ YAKIN ÜRETİCİLER (Seçili mağaza varsa)
 # =========================
-st.subheader("Yakındaki Üreticiler")
+st.subheader("Seçili Mağazanın Yakınındaki Üreticiler")
 
 top_n = st.selectbox("En yakın kaç üretici gösterilsin?", options=[5, 10, 20, 50], index=1)
 yaricap = st.slider("Yarıçap (km)", 1, 200, 30, 5)
@@ -118,7 +118,7 @@ yaricap = st.slider("Yarıçap (km)", 1, 200, 30, 5)
 yakin = pd.DataFrame()
 
 if secili_magaza is None:
-    st.warning("Yakın üretici hesabı için önce mağaza seçmelisin.")
+    st.warning("Yakın üretici bilgisi için önce mağaza seçmelisiniz.")
 else:
     m_lat = float(secili_magaza["ENLEM"])
     m_lon = float(secili_magaza["BOYLAM"])
@@ -133,7 +133,7 @@ else:
             .head(top_n)
         )
 
-        st.write(f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin)}** üretici var (en yakın {top_n}).")
+        st.write(f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin)}** en yakın üretici bilgisi aşağıda listelenmiştir:")
 
         st.dataframe(
             yakin[["CARI_KOD","CARI_ISIM","IL","ILCE","MESAFE_KM","ENLEM","BOYLAM"]] if len(yakin) else yakin,
@@ -150,7 +150,7 @@ st.divider()
 # - Seçiliyse: seçili mağaza merkez + yakın üreticiler + yarıçap çemberi
 # =========================
 st.subheader("Harita")
-st.write("DEBUG: Harita bölümüne geldim ✅")
+
 
 if secili_magaza is None:
     tr_center = [39.0, 35.0]
