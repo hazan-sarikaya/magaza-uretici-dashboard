@@ -1,5 +1,4 @@
 CARI_KOD,CARI_ISIM,ADRES,IL,ILCE,ENLEM,BOYLAM,TIPI
-C599,Çamaltý Yayladaðý Hatay,Çamaltý Mh. 01 T. Atmaca SokakN:77N:N:N:N:N:N:77,Hatay,YAYLADAÐI,35.900689,36.064867,Magaza
 J184,Yalý Evleri Anamur Mersin,Yalýevleri Mh. 27. Cadde No:172N:N:172N:172N:17N:172,Içel,ANAMUR,36.059646,32.848873,Magaza
 C015,Yeni Sahil Anamur Mersin,Saðlýk Mh. 2N:83N:83N:83N:83,Içel,ANAMUR,36.060129,32.848644,Magaza
 E928,Tekebaþý Samandað Hatay,Tekebaþý Mh. 144 148. SokakN:144N:144N:,Hatay,SAMANDAÐ,36.063239,35.988918,Magaza
@@ -6145,7 +6144,7 @@ D586,Deðirmen Gülpýnar Ayvacýk Çanakkale,Gülpýnar Köyü 148 Cumhuriyet Caddesi,Ça
 A5913,Gülpýnar Ayvacýk Çanakkale,Cumhuriyet Mah. ,Çanakkale,AYVACIK,39.534336,26.1195,Magaza
 A8886,Beþikçi Doðubeyazýt Aðrý,Uluyol Mh. Aðrý Cd.N:63/AN:N:,Agri,DOÐUBAYAZIT,39.5365,44.018605,Magaza
 A9389,Ketenpýnar Diyadin Aðrý,Atatürk Mh. ,Agri,DIYADIN,39.538395,43.675756,Magaza
-I080,Saray Doðubayazýt Aðrý,"Sarýgül Mh. Ýshak Paþa Sokak No:39°32'23.1""N 44°05'3",Agri,DOÐUBAYAZIT,39.538977,44.095251,Magaza
+"I080,Saray Doðubayazýt Aðrý,""Sarýgül Mh. Ýshak Paþa Sokak No:39°32'23.1""""N 44°05'3"",Agri,DOÐUBAYAZIT,39.538977,44.095251,Magaza"
 A5142,Kuruçay Cad Tavþanlý Kütahya,Yeni Mah.Kuruçay Cad.No:23 ,Kütahya,TAVÞANLI,39.539,29.4934,Magaza
 A7448,Tutak Aðrý,Murat Mah. 110 Nolu Sk. No:5,Agri,TUTAK,39.539373,42.771192,Magaza
 A4905,Dýyadýn Aðrý,Ýsa Aða Mh.Tekýn Sk. ,Agri,DIYADIN,39.539719,43.673004,Magaza
@@ -6153,7 +6152,7 @@ B008,Salý Pazarý Tavþanlý Kütahya,Hanýmçeþme Mh. bila Adnan Menderes Blv.,Kütahy
 B948,Yeni Mahalle Tavþanlý Kütahya,Yeni Mh. 14/A Emet Caddesi,Kütahya,TAVÞANLI,39.540193,29.489575,Magaza
 C647,Pýnar Mahallesi Tutak Aðrý,Cami Mh. 6N:1N:6,Agri,TUTAK,39.541096,42.767057,Magaza
 A0822,Murat Mah Diyadin Aðrý,Murat Mh. 10 Diyadin Taþlýçay Yolu,Agri,DIYADIN,39.5411,43.670858,Magaza
-J340,Mercan Doðubeyazýt Doðubayazýt Aðrý,"Yýlanlý Köyü Aðrý Doðubeyazýt Yolu No:39°32'29.0""N 44",Agri,DOÐUBAYAZIT,39.541385,44.017576,Magaza
+"J340,Mercan Doðubeyazýt Doðubayazýt Aðrý,""Yýlanlý Köyü Aðrý Doðubeyazýt Yolu No:39°32'29.0""""N 44"",Agri,DOÐUBAYAZIT,39.541385,44.017576,Magaza"
 K097,Ararat Doðubayazýt Aðrý,Uluyol Mh. Ýsa Geçit Caddesi No:1,Agri,DOÐUBAYAZIT,39.543733,44.077853,Magaza
 A5104,Haþim Bulvarý Tavþanlý Kütahya,Yeni Mah. ,Kütahya,TAVÞANLI,39.543846,29.494082,Magaza
 A5069,Subaþý Tavþanlý Kütahya,Subaþý Mah. ,Kütahya,TAVÞANLI,39.5439,29.5075,Magaza
@@ -6169,7 +6168,7 @@ A5137,Kükürtlü Tavþanlý Kütahya,Durak Mahallesi kükürtlü caddesi No ,Kütahya,TAV
 C837,Gökçetepe Küçükkuyu Ayvacýk Çanakka,Gökçetepe Mh. (Küçükkuyu Bld.) 1,Çanakkale,AYVACIK,39.548189,26.60739,Magaza
 A5997,Yýldýrým Beyazýt Tavþanlý Kütahya,YENÝDOÐAN CAD  ULUCAMÝ MAH NO :18/A ,Kütahya,TAVÞANLI,39.548223,29.497382,Magaza
 A8880,Ahmed Hani Doðubeyazýt Aðrý,Sarýgül Mh. ,Agri,DOÐUBAYAZIT,39.548691,44.08563,Magaza
-J611,Kandemir Doðubayazýt Doðubayazýt Aðrý,"Ahmedihani Mh. Yolaltý Sokak No:39°32'57.3""N 44N:",Agri,DOÐUBAYAZIT,39.549279,44.079291,Magaza
+"J611,Kandemir Doðubayazýt Doðubayazýt Aðrý,""Ahmedihani Mh. Yolaltý Sokak No:39°32'57.3""""N 44N:"",Agri,DOÐUBAYAZIT,39.549279,44.079291,Magaza"
 A4907,1 Nolu Iðdýr Cad. Doðubeyazýt,Uluyol Mh.1 Nolu Iðdýr Cd. N:N:N:,Agri,DOÐUBAYAZIT,39.549815,44.076196,Magaza
 I973,Refika Polatlý Ankara,Eskipolatlý Mh. Mevlana Caddesi No:21/AN:N:21N:21,Ankara,POLATLI,39.550802,32.142329,Magaza
 A5115,Moymul Tavþanlý Kütahya,Moymul Mh. Hotanlý CaddesiN:83,Kütahya,TAVÞANLI,39.550829,29.475288,Magaza
@@ -6359,7 +6358,7 @@ A6706,Kayahan Caddesi Merkez Sivas,Karþýyaka Mh. 70. 68. SokakN:1N:1N:1N:N:N:N:,
 B583,Kampüs Merkez Sivas,Mescitli Köyü 175. Sokak (Cumhuriyet ÜniversitN:,Sivas,MERKEZ,39.70708,37.027503,Magaza
 I864,Gün Sazak Odunpazarý Eskiþehir,75.Yýl (Sultandere) Mh. Gün Sazak Caddesi No:Bila,Eskisehir,ODUNPAZARI,39.70958,30.619164,Magaza
 A8256,75. Yýl Odunpazarý Eskiþehir,75. Yýl Mah. Muammer Aksoy Cad No:29 Odunpazarý Eskiþehir,Eskisehir,ODUNPAZARI,39.710568,30.613842,Magaza
-J215,Sanayi Aðrý Merkez Aðrý,"Fýrat Mh. 9. Sokak No:39°42'45.2""N 43°01'3N:",Agri,MERKEZ,39.712716,43.025551,Magaza
+"J215,Sanayi Aðrý Merkez Aðrý,""Fýrat Mh. 9. Sokak No:39°42'45.2""""N 43°01'3N:"",Agri,MERKEZ,39.712716,43.025551,Magaza"
 K133,Tendürek Merkez Aðrý,Fýrat Mh. Gerede - Gürbulak Otoyolu No:4,Agri,MERKEZ,39.713973,43.013456,Magaza
 F685,Polis Okulu Merkez Sivas,Ýþhaný Köyü Üniversite YoluN:1N:N:,Sivas,MERKEZ,39.714836,37.041482,Magaza
 A0948,Alparslan Merkez Aðrý,Alpaslan Mh. 144 Eski Van Cd.N:N:,Agri,MERKEZ,39.715363,43.052824,Magaza
@@ -6953,7 +6952,7 @@ K363,Özgürlük Merkez Iðdýr,Özgür Mh. Genç Osman Caddesi No:53A,Igdir,MERKEZ,39.9
 D240,Türkcan Mamak Ankara,Kutlu Mh. 42/42-A Mutlu CaddesiN:N:,Ankara,MAMAK,39.912929,32.905432,Magaza
 J041,Akay Çankaya Ankara,Kavaklýdere Mh. Esat Caddesi (Akay Caddesi) No:1N:8,Ankara,ÇANKAYA,39.913147,32.856233,Magaza
 A0927,Dadaþkent Aziziye Erzurum,Saltuklu Mh. 17 Dadaþ Cd.N:17N:17N:17N:17N:17N:17,Erzurum,AZIZIYE,39.913169,41.187058,Magaza
-J672,Tebrizkapý Yakutiye Erzurum,"Lalapaþa Mh. Nafiz Ergün Sokak No:39°54'46.5""N:45",Erzurum,YAKUTIYE,39.913242,41.270412,Magaza
+"J672,Tebrizkapý Yakutiye Erzurum,""Lalapaþa Mh. Nafiz Ergün Sokak No:39°54'46.5""""N:45"",Erzurum,YAKUTIYE,39.913242,41.270412,Magaza"
 K214,Can Mamak Ankara,Fahri Korutürk Mh. 897/1. Sokak No:38,Ankara,MAMAK,39.913258,32.927951,Magaza
 A0565,Týnaztepe Çankaya Ankara,Esatoðlu Mh. 38/A Hacýyolu Sk.,Ankara,ÇANKAYA,39.913259,32.864191,Magaza
 A7706,Belediye Cad Susurluk Balýkesir,Han mah. Belediye Cad. Dýþ Kapý No:45,Balikesir,SUSURLUK,39.913522,28.159214,Magaza
@@ -6984,7 +6983,7 @@ G554,Yurtlar Yakutiye Erzurum,Þükrüpaþa Mh. Kombina Yolu No:3N:3N:3,Erzurum,YAKU
 E241,Zafertepe Çankaya Ankara,Seyranbaðlarý Mh. 86-A/B Ýncesu Caddesi,Ankara,ÇANKAYA,39.917599,32.874787,Magaza
 J009,Kocatepe Çankaya Ankara,Kültür Mh. Kýzýlýrmak Caddesi No:57/B,Ankara,ÇANKAYA,39.918356,32.861225,Magaza
 A4944,Fatýh Cad. Iðdýr,Karaaðaç Mh.Fatýh Cd.605.Sk. ,Igdir,MERKEZ,39.9185,44.0395,Magaza
-I166,Yeni Cumhuriyet Merkez Iðdýr,"Cumhuriyet Mh. Millet Caddesi No:39°55'07.4""N 4N:",Igdir,MERKEZ,39.918602,44.046519,Magaza
+"I166,Yeni Cumhuriyet Merkez Iðdýr,""Cumhuriyet Mh. Millet Caddesi No:39°55'07.4""""N 4N:"",Igdir,MERKEZ,39.918602,44.046519,Magaza"
 D728,Natoyolu Caddesi Mamak Ankara,Tuzluçayýr Mh. 67/A Natoyolu CaddesiN:67N:67N:6N:,Ankara,MAMAK,39.918629,32.910797,Magaza
 D117,Çitlekçi Yahþihan Kýrýkkale,Hacýbalý Köyü Zile Ankara YoluN:2/1B1C,Kirikkale,YAHÞIHAN,39.918656,33.432168,Magaza
 A9223,Bahçelievler 7 Cadde Çankaya Ankara,Yukarý Bahçelievler Mh. 69. Sk. (17. Sk.)N:21/AN:21/AN:21/A,Ankara,ÇANKAYA,39.918871,32.826833,Magaza
@@ -6996,7 +6995,7 @@ A0025,Mithatpaþa Çankaya Ankara,Kocatepe Mh. 56/A Mithatpaþa Cd.,Ankara,ÇANKAYA,
 A4942,Mýllet Cad. Iðdýr,Cumhurýyet Cad. N:,Igdir,MERKEZ,39.919488,44.044377,Magaza
 A6011,Akþemseddin Mamak Ankara,General Zeki Doðan Mah. Natoyolu Ca N:38/A-BN:38N:38,Ankara,MAMAK,39.9195,32.906942,Magaza
 A9270,Süleyman Nazif Mamak,Tuzluçayýr Mh. 597. Sk. (32. Sk.)N:32N:32N:9/13N:9/13,Ankara,MAMAK,39.919969,32.909791,Magaza
-I613,Göker Merkez Iðdýr,"Topçular Mh. Nilüfer Sokak No:39°55'11.0""N 44N:",Igdir,MERKEZ,39.919986,44.041112,Magaza
+"I613,Göker Merkez Iðdýr,""Topçular Mh. Nilüfer Sokak No:39°55'11.0""""N 44N:"",Igdir,MERKEZ,39.919986,44.041112,Magaza"
 H653,Veyselkarani Aziziye Erzurum,Saltuklu Mh. Milli Egemenlik Caddesi No:25-56N:25,Erzurum,AZIZIYE,39.919998,41.184111,Magaza
 K147,Ünal Elmadað Ankara,Ýsmetpaþa Mh. Arif Çalýþ Caddesi No:30,Ankara,ELMADAÐ,39.920236,33.230279,Magaza
 A7476,Çarþý Mah. Aþkale Erzurum,Çarþý Mah. Erzurum Cad. Aðgül Pasajý No:6N:6N:6,Erzurum,AÞKALE,39.920258,40.694848,Magaza
@@ -7106,7 +7105,7 @@ A5663,Hikmet Özer Etimesgut Ankara,Ýstasyon mah.Hikmet Özer Cad. N:,Ankara,ETIME
 I448,Piri Reis Mamak Ankara,Harman Mh. Abdülhakhamit Caddesi No:76/A-BNN:76/A,Ankara,MAMAK,39.937926,32.908832,Magaza
 I659,Sarayönü Mamak Ankara,Hürel Mh. Þehit Ýdris Yýlmaz Caddesi No:19N:19,Ankara,MAMAK,39.938019,32.897765,Magaza
 E912,Karaaðaç Mamak Ankara,Hüseyingazi Mh. E-3/3-5-6-7-9-10-11-12  181. SokN:E-3/3-,Ankara,MAMAK,39.938245,32.915326,Magaza
-J147,Ýstiklal Iðdýr Merkez Iðdýr,"Namýk Kemal Mh. (Melekli Bld.) Iðdýr Nahçývan Yolu No:39°56'19.3""N 44°0",Igdir,MERKEZ,39.938681,44.09234,Magaza
+"J147,Ýstiklal Iðdýr Merkez Iðdýr,""Namýk Kemal Mh. (Melekli Bld.) Iðdýr Nahçývan Yolu No:39°56'19.3""""N 44°0"",Igdir,MERKEZ,39.938681,44.09234,Magaza"
 H597,Yeni Mavikent Etimesgut Ankara,30 Aðustos Mh. 1773. CaddeN:46/C,Ankara,ETIMESGUT,39.938861,32.649757,Magaza
 J713,Aslantepe Mamak Ankara,Þafaktepe Mh. Hakan Caddesi No:4/  C BLOK 1. BN:4,Ankara,MAMAK,39.939156,32.891227,Magaza
 D115,Gonca Etimesgut Ankara,Ahi Mesut Mh. 69N:N:N:69N:69N:69N:69N:69N:69,Ankara,ETIMESGUT,39.939656,32.63636,Magaza
