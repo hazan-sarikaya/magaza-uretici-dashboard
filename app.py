@@ -4,9 +4,171 @@ import numpy as np
 import folium
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
+from pathlib import Path
 
 st.set_page_config(page_title="Mağaza & Üretici & Büfe Dashboard", layout="wide")
+
+
+# =========================
+# LOGIN / GUVENLIK
+# =========================
+def check_login(username, password):
+    """
+    Kullanıcı adı / şifre kontrolü.
+    Şifreleri Streamlit secrets içine koyman önerilir.
+
+    Streamlit Cloud > App settings > Secrets
+    örnek:
+    [auth]
+    kullanici1 = "sifre1"
+    kullanici2 = "sifre2"
+    """
+    try:
+        users = dict(st.secrets["auth"])
+    except Exception:
+        users = {
+            # BURAYI GEÇİCİ kullanabilirsin ama asıl öneri st.secrets kullanmak
+            # "ornek_kullanici": "ornek_sifre"
+        }
+
+    return username in users and users[username] == password
+
+
+def login_screen():
+    st.markdown(
+        """
+        <style>
+        .main > div {
+            padding-top: 1.5rem;
+        }
+        .login-wrap {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0;
+        }
+        .login-card {
+            background: white;
+            border-radius: 18px;
+            padding: 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+        .login-left {
+            background: linear-gradient(135deg, #fff7f2 0%, #fff 100%);
+            padding: 40px 30px;
+            height: 100%;
+            text-align: center;
+        }
+        .login-right {
+            padding: 40px 30px 30px 30px;
+        }
+        .login-title {
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #222;
+        }
+        .login-subtitle {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 24px;
+        }
+        .mini-note {
+            color: #888;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        st.markdown('<div class="login-left">', unsafe_allow_html=True)
+
+        logo_path = Path("favori_logo.png")
+        if logo_path.exists():
+            st.image(str(logo_path), width=220)
+        else:
+            st.markdown("## FAVORİ GIDA")
+            st.info("Logo için klasöre `favori_logo.png` ekle.")
+
+        st.markdown(
+            """
+            <div style="margin-top:20px;">
+                <div style="font-size:34px; font-weight:800; color:#f25c19; line-height:1.15;">
+                    Türkiye'nin her yerindeyiz
+                </div>
+                <div style="margin-top:14px; color:#666; font-size:16px;">
+                    Mağaza, üretici ve büfe verilerine güvenli erişim
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col2:
+        st.markdown('<div class="login-right">', unsafe_allow_html=True)
+        st.markdown('<div class="login-title">Giriş Yap</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="login-subtitle">Lütfen kullanıcı adı ve şifrenizi giriniz.</div>',
+            unsafe_allow_html=True,
+        )
+
+        username = st.text_input("Kullanıcı Adı")
+        password = st.text_input("Şifre", type="password")
+
+        c1, c2 = st.columns([1, 2])
+        with c1:
+            login_btn = st.button("Giriş Yap", use_container_width=True)
+
+        if login_btn:
+            if check_login(username, password):
+                st.session_state["authenticated"] = True
+                st.session_state["username"] = username
+                st.success("Giriş başarılı. Yükleniyor...")
+                st.rerun()
+            else:
+                st.error("Kullanıcı adı veya şifre hatalı.")
+
+        st.markdown(
+            '<div class="mini-note">Yetkisiz erişimler engellenir.</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def logout_button():
+    c1, c2 = st.columns([6, 1])
+    with c2:
+        if st.button("Çıkış Yap"):
+            st.session_state["authenticated"] = False
+            st.session_state["username"] = None
+            st.rerun()
+
+
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+if not st.session_state["authenticated"]:
+    login_screen()
+    st.stop()
+
+
+# =========================
+# UYGULAMA BASLIĞI
+# =========================
 st.title("Mağaza & Üretici & Büfe Dashboard")
+st.caption(f"Giriş yapan kullanıcı: {st.session_state.get('username', '')}")
+logout_button()
 
 if st.button("🔄 Veriyi Yenile"):
     st.cache_data.clear()
@@ -16,12 +178,7 @@ if st.button("🔄 Veriyi Yenile"):
 # YARDIMCI FONKSİYONLAR
 # =========================
 def normalize_text(value):
-    """
-    Kolon isimlerini ve metinleri Türkçe karakter / büyük İ / görünmez işaret
-    sorunlarına dayanıklı şekilde normalize eder.
-    """
     s = str(value).strip()
-
     replacements = {
         "İ": "I",
         "ı": "i",
@@ -35,15 +192,12 @@ def normalize_text(value):
         "ö": "o",
         "Ç": "C",
         "ç": "c",
-        "\u0307": "",   # birleşik nokta işareti
-        "\xa0": " ",    # non-breaking space
+        "\u0307": "",
+        "\xa0": " ",
     }
-
     for old, new in replacements.items():
         s = s.replace(old, new)
-
-    s = s.strip().lower()
-    return s
+    return s.strip().lower()
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
@@ -69,17 +223,15 @@ def load_data():
 @st.cache_data
 def load_bufe():
     b = pd.read_excel("BUFE.xlsx", engine="openpyxl")
-    original_columns = [str(c).strip() for c in b.columns]
-    b.columns = original_columns
+    b.columns = [str(c).strip() for c in b.columns]
 
     rename_map = {}
-
     for col in b.columns:
         c = normalize_text(col)
 
-        if c in ["bufe adi", "bufe adi ", "bufe adı", "bufe adi"]:
+        if c in ["bufe adi", "bufe adı"]:
             rename_map[col] = "BUFE_ADI"
-        elif c in ["ilce", "ilce ", "ilce/bolge"]:
+        elif c in ["ilce", "ilce/bolge"]:
             rename_map[col] = "ILCE"
         elif c in ["mahalle"]:
             rename_map[col] = "MAHALLE"
@@ -94,26 +246,15 @@ def load_bufe():
 
     b = b.rename(columns=rename_map)
 
-    # Zorunlu kolonlar yoksa oluştur
     for col in ["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "ENLEM", "BOYLAM"]:
         if col not in b.columns:
             b[col] = np.nan
 
-    # Metin kolonlarını temizle
     text_cols = ["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES"]
     for col in text_cols:
         b[col] = b[col].astype(str).str.strip()
-        b[col] = b[col].replace(
-            {
-                "nan": None,
-                "None": None,
-                "none": None,
-                "NaN": None,
-                "": None
-            }
-        )
+        b[col] = b[col].replace({"nan": None, "None": None, "none": None, "NaN": None, "": None})
 
-    # Koordinatlar
     b["ENLEM"] = pd.to_numeric(b["ENLEM"], errors="coerce")
     b["BOYLAM"] = pd.to_numeric(b["BOYLAM"], errors="coerce")
     b = b.dropna(subset=["ENLEM", "BOYLAM"]).copy()
@@ -124,9 +265,6 @@ def load_bufe():
 df = load_data()
 bufeler = load_bufe()
 
-# =========================
-# TEMİZLİK
-# =========================
 df.columns = [str(c).strip() for c in df.columns]
 
 required_main_cols = ["TIPI", "ENLEM", "BOYLAM", "CARI_KOD", "CARI_ISIM"]
@@ -144,7 +282,6 @@ df = df.dropna(subset=["ENLEM", "BOYLAM"]).copy()
 magazalar = df[tip == "magaza"].copy()
 ureticiler = df[tip == "uretici"].copy()
 
-# Opsiyonel kolonlar yoksa oluştur
 for optional_col in ["IL", "ILCE", "ADRES"]:
     if optional_col not in magazalar.columns:
         magazalar[optional_col] = ""
@@ -153,7 +290,7 @@ for optional_col in ["IL", "ILCE", "ADRES"]:
 
 
 # =========================
-# ÖZET
+# OZET
 # =========================
 st.subheader("Özet")
 c1, c2, c3, c4 = st.columns(4)
@@ -166,7 +303,7 @@ st.divider()
 
 
 # =========================
-# MAĞAZA SEÇİMİ
+# MAGAZA SECIMI
 # =========================
 st.subheader("Mağaza Seçimi")
 
@@ -239,7 +376,7 @@ st.divider()
 
 
 # =========================
-# YAKIN ÜRETİCİLER / BÜFELER
+# YAKIN KAYITLAR
 # =========================
 yakin_ureticiler = pd.DataFrame()
 yakin_bufeler = pd.DataFrame()
@@ -263,9 +400,7 @@ else:
             .copy()
         )
 
-        st.write(
-            f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_ureticiler)}** en yakın üretici bilgisi aşağıda listelenmiştir:"
-        )
+        st.write(f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_ureticiler)}** en yakın üretici bilgisi aşağıda listelenmiştir:")
 
         if len(yakin_ureticiler) > 0:
             st.dataframe(
@@ -295,9 +430,7 @@ else:
             .copy()
         )
 
-        st.write(
-            f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_bufeler)}** en yakın büfe bilgisi aşağıda listelenmiştir:"
-        )
+        st.write(f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_bufeler)}** en yakın büfe bilgisi aşağıda listelenmiştir:")
 
         if len(yakin_bufeler) > 0:
             st.dataframe(
@@ -313,7 +446,7 @@ st.divider()
 
 
 # =========================
-# HARİTA
+# HARITA
 # =========================
 st.subheader("Harita")
 
@@ -328,7 +461,6 @@ if secili_magaza is None:
     cluster_magaza = MarkerCluster().add_to(magaza_group)
     cluster_uretici = MarkerCluster().add_to(uretici_group)
 
-    # Mağazalar
     for _, row in magazalar.sample(min(2000, len(magazalar)), random_state=1).iterrows():
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
@@ -339,7 +471,6 @@ if secili_magaza is None:
             popup=f"Mağaza: {row.get('CARI_ISIM', '')}"
         ).add_to(cluster_magaza)
 
-    # Üreticiler
     for _, row in ureticiler.sample(min(2000, len(ureticiler)), random_state=1).iterrows():
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
@@ -350,7 +481,6 @@ if secili_magaza is None:
             popup=f"Üretici: {row.get('CARI_ISIM', '')}"
         ).add_to(cluster_uretici)
 
-    # Büfeler -> cluster değil, direkt yeşil nokta
     for _, row in bufeler.iterrows():
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
@@ -379,14 +509,12 @@ else:
 
     m = folium.Map(location=[m_lat, m_lon], zoom_start=11, tiles="OpenStreetMap")
 
-    # Seçili mağaza
     folium.Marker(
         [m_lat, m_lon],
         popup=f"Mağaza: {secili_magaza['CARI_ISIM']}",
         icon=folium.Icon(color="red"),
     ).add_to(m)
 
-    # Yarıçap
     folium.Circle(
         location=[m_lat, m_lon],
         radius=yaricap * 1000,
@@ -394,7 +522,6 @@ else:
         fill=False,
     ).add_to(m)
 
-    # Yakın üreticiler
     for _, row in yakin_ureticiler.iterrows():
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
@@ -405,7 +532,6 @@ else:
             fill_opacity=0.85,
         ).add_to(m)
 
-    # Yakın büfeler
     for _, row in yakin_bufeler.iterrows():
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
