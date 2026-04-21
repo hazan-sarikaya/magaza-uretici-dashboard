@@ -120,7 +120,6 @@ def login_screen():
         username = st.text_input("Kullanıcı Adı")
         password = st.text_input("Şifre", type="password")
 
-        st.write("AUTH DEBUG:", st.secrets.to_dict().get("auth", {}))
         
         c1, c2 = st.columns([1, 2])
         with c1:
