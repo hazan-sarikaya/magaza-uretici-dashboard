@@ -12,26 +12,22 @@ st.set_page_config(page_title="Mağaza & Üretici & Büfe Dashboard", layout="wi
 # =========================
 # LOGIN / GUVENLIK
 # =========================
+
 def check_login(username, password):
-    """
-    Kullanıcı adı / şifre kontrolü.
-    Şifreleri Streamlit secrets içine koyman önerilir.
-
-    Streamlit Cloud > App settings > Secrets
-    örnek:
-    [auth]
-    kullanici1 = "sifre1"
-    kullanici2 = "sifre2"
-    """
     try:
-        users = dict(st.secrets["auth"])
-    except Exception:
-        users = {
-            # BURAYI GEÇİCİ kullanabilirsin ama asıl öneri st.secrets kullanmak
-            # "ornek_kullanici": "ornek_sifre"
-        }
+        secrets_dict = st.secrets.to_dict()
+        auth_section = secrets_dict.get("auth", {})
 
-    return username in users and users[username] == password
+        users = {str(k).strip(): str(v).strip() for k, v in auth_section.items()}
+
+        username = str(username).strip()
+        password = str(password).strip()
+
+        return users.get(username) == password
+
+    except Exception as e:
+        st.error(f"Secrets okunamadı: {e}")
+        return False
 
 
 def login_screen():
@@ -124,6 +120,8 @@ def login_screen():
         username = st.text_input("Kullanıcı Adı")
         password = st.text_input("Şifre", type="password")
 
+        st.write("AUTH DEBUG:", st.secrets.to_dict().get("auth", {}))
+        
         c1, c2 = st.columns([1, 2])
         with c1:
             login_btn = st.button("Giriş Yap", use_container_width=True)
