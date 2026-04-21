@@ -13,6 +13,50 @@ if st.button("🔄 Veriyi Yenile"):
 
 
 # =========================
+# YARDIMCI FONKSİYONLAR
+# =========================
+def normalize_text(value):
+    """
+    Kolon isimlerini ve metinleri Türkçe karakter / büyük İ / görünmez işaret
+    sorunlarına dayanıklı şekilde normalize eder.
+    """
+    s = str(value).strip()
+
+    replacements = {
+        "İ": "I",
+        "ı": "i",
+        "Ş": "S",
+        "ş": "s",
+        "Ğ": "G",
+        "ğ": "g",
+        "Ü": "U",
+        "ü": "u",
+        "Ö": "O",
+        "ö": "o",
+        "Ç": "C",
+        "ç": "c",
+        "\u0307": "",   # birleşik nokta işareti
+        "\xa0": " ",    # non-breaking space
+    }
+
+    for old, new in replacements.items():
+        s = s.replace(old, new)
+
+    s = s.strip().lower()
+    return s
+
+
+def haversine_km(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
+    c = 2 * np.arcsin(np.sqrt(a))
+    return R * c
+
+
+# =========================
 # VERİ OKUMA
 # =========================
 @st.cache_data
@@ -24,36 +68,52 @@ def load_data():
 
 @st.cache_data
 def load_bufe():
-    b = pd.read_excel("BUFE.xlsx")
-    b.columns = [str(c).strip() for c in b.columns]
+    b = pd.read_excel("BUFE.xlsx", engine="openpyxl")
+    original_columns = [str(c).strip() for c in b.columns]
+    b.columns = original_columns
 
-    # Beklenen kolon isimlerini standartlaştır
     rename_map = {}
-    for col in b.columns:
-        c = str(col).strip().lower()
 
-        if c == "büfe adı" or c == "bufe adı" or c == "büfe adi" or c == "bufe adi":
+    for col in b.columns:
+        c = normalize_text(col)
+
+        if c in ["bufe adi", "bufe adi ", "bufe adı", "bufe adi"]:
             rename_map[col] = "BUFE_ADI"
-        elif c == "ilçe" or c == "ilce":
+        elif c in ["ilce", "ilce ", "ilce/bolge"]:
             rename_map[col] = "ILCE"
-        elif c == "mahalle":
+        elif c in ["mahalle"]:
             rename_map[col] = "MAHALLE"
-        elif c == "bölge" or c == "bolge":
+        elif c in ["bolge", "bolgesi", "bolge adi"]:
             rename_map[col] = "BOLGE"
-        elif c == "adres":
+        elif c in ["adres", "acik adres", "açik adres"]:
             rename_map[col] = "ADRES"
-        elif c == "x":
+        elif c in ["x", "enlem", "latitude", "lat"]:
             rename_map[col] = "ENLEM"
-        elif c == "y":
+        elif c in ["y", "boylam", "longitude", "lon", "lng"]:
             rename_map[col] = "BOYLAM"
 
     b = b.rename(columns=rename_map)
 
-    # Eksik kolonlar varsa oluştur
+    # Zorunlu kolonlar yoksa oluştur
     for col in ["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "ENLEM", "BOYLAM"]:
         if col not in b.columns:
             b[col] = np.nan
 
+    # Metin kolonlarını temizle
+    text_cols = ["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES"]
+    for col in text_cols:
+        b[col] = b[col].astype(str).str.strip()
+        b[col] = b[col].replace(
+            {
+                "nan": None,
+                "None": None,
+                "none": None,
+                "NaN": None,
+                "": None
+            }
+        )
+
+    # Koordinatlar
     b["ENLEM"] = pd.to_numeric(b["ENLEM"], errors="coerce")
     b["BOYLAM"] = pd.to_numeric(b["BOYLAM"], errors="coerce")
     b = b.dropna(subset=["ENLEM", "BOYLAM"]).copy()
@@ -67,21 +127,16 @@ bufeler = load_bufe()
 # =========================
 # TEMİZLİK
 # =========================
-# TIPI alanını Türkçe karakter dayanıklı temizle
-tip = df["TIPI"].astype(str).str.strip().str.lower()
-tip = tip.replace(
-    {
-        "ü": "u",
-        "ı": "i",
-        "ş": "s",
-        "ğ": "g",
-        "ö": "o",
-        "ç": "c",
-    },
-    regex=True
-)
+df.columns = [str(c).strip() for c in df.columns]
 
-# Enlem/Boylam sayıya çevir
+required_main_cols = ["TIPI", "ENLEM", "BOYLAM", "CARI_KOD", "CARI_ISIM"]
+for col in required_main_cols:
+    if col not in df.columns:
+        st.error(f"magazalar.csv içinde '{col}' kolonu bulunamadı.")
+        st.stop()
+
+tip = df["TIPI"].astype(str).apply(normalize_text)
+
 df["ENLEM"] = pd.to_numeric(df["ENLEM"], errors="coerce")
 df["BOYLAM"] = pd.to_numeric(df["BOYLAM"], errors="coerce")
 df = df.dropna(subset=["ENLEM", "BOYLAM"]).copy()
@@ -89,18 +144,12 @@ df = df.dropna(subset=["ENLEM", "BOYLAM"]).copy()
 magazalar = df[tip == "magaza"].copy()
 ureticiler = df[tip == "uretici"].copy()
 
-
-# =========================
-# MESAFE FONKSİYONU
-# =========================
-def haversine_km(lat1, lon1, lat2, lon2):
-    R = 6371.0
-    lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
-    c = 2 * np.arcsin(np.sqrt(a))
-    return R * c
+# Opsiyonel kolonlar yoksa oluştur
+for optional_col in ["IL", "ILCE", "ADRES"]:
+    if optional_col not in magazalar.columns:
+        magazalar[optional_col] = ""
+    if optional_col not in ureticiler.columns:
+        ureticiler[optional_col] = ""
 
 
 # =========================
@@ -125,14 +174,14 @@ if len(magazalar) == 0:
     st.error("Mağaza bulunamadı. TIPI alanında 'Magaza' yazdığından emin ol.")
     st.stop()
 
+m_df = magazalar.copy()
+m_df["CARI_ISIM"] = m_df["CARI_ISIM"].astype(str)
+m_df["CARI_KOD"] = m_df["CARI_KOD"].astype(str)
+
 arama = st.text_input(
     "Mağaza adı veya kodunu yaz",
     placeholder="Yazmaya başla... (örn: kurtuluş, A0002)"
 ).strip()
-
-m_df = magazalar.copy()
-m_df["CARI_ISIM"] = m_df["CARI_ISIM"].astype(str)
-m_df["CARI_KOD"] = m_df["CARI_KOD"].astype(str)
 
 secili_magaza = None
 
@@ -179,8 +228,10 @@ st.divider()
 # =========================
 st.subheader("Yakın Kayıt Ayarları")
 c1, c2 = st.columns(2)
+
 with c1:
     top_n = st.selectbox("En yakın kaç kayıt gösterilsin?", options=[5, 10, 20, 50], index=1)
+
 with c2:
     yaricap = st.slider("Yarıçap (km)", 1, 200, 30, 5)
 
@@ -188,12 +239,12 @@ st.divider()
 
 
 # =========================
-# YAKIN ÜRETİCİLER
+# YAKIN ÜRETİCİLER / BÜFELER
 # =========================
-st.subheader("Seçili Mağazanın Yakınındaki Üreticiler")
-
 yakin_ureticiler = pd.DataFrame()
 yakin_bufeler = pd.DataFrame()
+
+st.subheader("Seçili Mağazanın Yakınındaki Üreticiler")
 
 if secili_magaza is None:
     st.warning("Yakın üretici ve büfe bilgisi için önce mağaza seçmelisiniz.")
@@ -228,10 +279,6 @@ else:
 
 st.divider()
 
-
-# =========================
-# YAKIN BÜFELER
-# =========================
 st.subheader("Seçili Mağazanın Yakınındaki Büfeler")
 
 if secili_magaza is None:
@@ -267,8 +314,6 @@ st.divider()
 
 # =========================
 # HARİTA
-# - Mağaza seçili değilse: Türkiye genel görünüm + cluster
-# - Seçiliyse: mağaza merkez + yakın üreticiler + yakın büfeler + yarıçap
 # =========================
 st.subheader("Harita")
 
@@ -282,8 +327,8 @@ if secili_magaza is None:
 
     cluster_magaza = MarkerCluster().add_to(magaza_group)
     cluster_uretici = MarkerCluster().add_to(uretici_group)
-    cluster_bufe = MarkerCluster().add_to(bufe_group)
 
+    # Mağazalar
     for _, row in magazalar.sample(min(2000, len(magazalar)), random_state=1).iterrows():
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
@@ -294,6 +339,7 @@ if secili_magaza is None:
             popup=f"Mağaza: {row.get('CARI_ISIM', '')}"
         ).add_to(cluster_magaza)
 
+    # Üreticiler
     for _, row in ureticiler.sample(min(2000, len(ureticiler)), random_state=1).iterrows():
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
@@ -304,22 +350,27 @@ if secili_magaza is None:
             popup=f"Üretici: {row.get('CARI_ISIM', '')}"
         ).add_to(cluster_uretici)
 
-    for _, row in bufeler.sample(min(2000, len(bufeler)), random_state=1).iterrows():
+    # Büfeler -> cluster değil, direkt yeşil nokta
+    for _, row in bufeler.iterrows():
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
-            radius=3,
+            radius=4,
             color="green",
             fill=True,
-            fill_opacity=0.7,
-            popup=f"Büfe: {row.get('BUFE_ADI', '')}"
-        ).add_to(cluster_bufe)
+            fill_opacity=0.85,
+            popup=(
+                f"Büfe: {row.get('BUFE_ADI', '')}<br>"
+                f"İlçe: {row.get('ILCE', '')}<br>"
+                f"Mahalle: {row.get('MAHALLE', '')}<br>"
+                f"Bölge: {row.get('BOLGE', '')}"
+            )
+        ).add_to(bufe_group)
 
     magaza_group.add_to(m)
     uretici_group.add_to(m)
     bufe_group.add_to(m)
 
     folium.LayerControl(collapsed=False).add_to(m)
-
     st_folium(m, width=1200, height=650, returned_objects=[])
 
 else:
@@ -335,7 +386,7 @@ else:
         icon=folium.Icon(color="red"),
     ).add_to(m)
 
-    # Yarıçap çemberi
+    # Yarıçap
     folium.Circle(
         location=[m_lat, m_lon],
         radius=yaricap * 1000,
@@ -359,7 +410,12 @@ else:
         folium.CircleMarker(
             location=[float(row["ENLEM"]), float(row["BOYLAM"])],
             radius=6,
-            popup=f"Büfe: {row['BUFE_ADI']} ({row['MESAFE_KM']:.1f} km)",
+            popup=(
+                f"Büfe: {row['BUFE_ADI']} ({row['MESAFE_KM']:.1f} km)<br>"
+                f"İlçe: {row.get('ILCE', '')}<br>"
+                f"Mahalle: {row.get('MAHALLE', '')}<br>"
+                f"Bölge: {row.get('BOLGE', '')}"
+            ),
             color="green",
             fill=True,
             fill_opacity=0.85,
