@@ -88,7 +88,7 @@ def login_screen():
 
         logo_path = Path("favori_logo.png")
         if logo_path.exists():
-            st.image(str(logo_path), width=220)
+            st.image(str(logo_path), width=400)
         else:
             st.markdown("## FAVORİ GIDA")
             st.info("Logo için klasöre `favori_logo.png` ekle.")
