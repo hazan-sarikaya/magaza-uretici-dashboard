@@ -497,6 +497,58 @@ if secili_magaza is None:
     uretici_group.add_to(m)
     bufe_group.add_to(m)
 
+    legend_html = """
+<div style="
+    position: fixed;
+    bottom: 50px;
+    left: 50px;
+    z-index: 9999;
+    background-color: white;
+    border: 2px solid grey;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+">
+    <div style="font-weight: bold; margin-bottom: 8px;">Harita Açıklaması</div>
+    <div style="margin-bottom: 6px;">
+        <span style="
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: red;
+            border-radius: 50%;
+            margin-right: 8px;
+        "></span>
+        Mağazalar
+    </div>
+    <div style="margin-bottom: 6px;">
+        <span style="
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: blue;
+            border-radius: 50%;
+            margin-right: 8px;
+        "></span>
+        Üreticiler
+    </div>
+    <div>
+        <span style="
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: green;
+            border-radius: 50%;
+            margin-right: 8px;
+        "></span>
+        Büfeler
+    </div>
+</div>
+"""
+
+    m.get_root().html.add_child(folium.Element(legend_html))
+
     folium.LayerControl(collapsed=False).add_to(m)
     st_folium(m, width=1200, height=650, returned_objects=[])
 
