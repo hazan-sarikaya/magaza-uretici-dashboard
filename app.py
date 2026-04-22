@@ -5,7 +5,6 @@ import folium
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from pathlib import Path
-
 from io import BytesIO
 
 def dataframe_to_excel_bytes(df):
@@ -21,19 +20,16 @@ st.set_page_config(page_title="Mağaza & Üretici & Büfe Dashboard", layout="wi
 # =========================
 # LOGIN / GUVENLIK
 # =========================
-
 def check_login(username, password):
     try:
         secrets_dict = st.secrets.to_dict()
         auth_section = secrets_dict.get("auth", {})
-
         users = {str(k).strip(): str(v).strip() for k, v in auth_section.items()}
 
         username = str(username).strip()
         password = str(password).strip()
 
         return users.get(username) == password
-
     except Exception as e:
         st.error(f"Secrets okunamadı: {e}")
         return False
@@ -50,14 +46,6 @@ def login_screen():
             max-width: 1000px;
             margin: 30px auto;
             padding: 0;
-        }
-        .login-card {
-            background: white;
-            border-radius: 18px;
-            padding: 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.10);
-            overflow: hidden;
-            border: 1px solid #eee;
         }
         .login-left {
             background: linear-gradient(135deg, #fff7f2 0%, #fff 100%);
@@ -129,7 +117,6 @@ def login_screen():
         username = st.text_input("Kullanıcı Adı")
         password = st.text_input("Şifre", type="password")
 
-        
         c1, c2 = st.columns([1, 2])
         with c1:
             login_btn = st.button("Giriş Yap", use_container_width=True)
@@ -259,7 +246,9 @@ def load_bufe():
     text_cols = ["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES"]
     for col in text_cols:
         b[col] = b[col].astype(str).str.strip()
-        b[col] = b[col].replace({"nan": None, "None": None, "none": None, "NaN": None, "": None})
+        b[col] = b[col].replace(
+            {"nan": None, "None": None, "none": None, "NaN": None, "": None}
+        )
 
     b["ENLEM"] = pd.to_numeric(b["ENLEM"], errors="coerce")
     b["BOYLAM"] = pd.to_numeric(b["BOYLAM"], errors="coerce")
@@ -406,26 +395,30 @@ else:
             .copy()
         )
 
-        st.write(f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_ureticiler)}** en yakın üretici bilgisi aşağıda listelenmiştir:")
-
-    if len(yakin_ureticiler) > 0:
-        st.dataframe(
-        yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]],
-        use_container_width=True
+        st.write(
+            f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_ureticiler)}** en yakın üretici bilgisi aşağıda listelenmiştir:"
         )
 
-        excel_data_ureticiler = dataframe_to_excel_bytes(
-        yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]]
-        )
+        if len(yakin_ureticiler) > 0:
+            st.dataframe(
+                yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]],
+                use_container_width=True
+            )
 
-        st.download_button(
-        label="Üreticileri Excel Olarak İndir",
-        data=excel_data_ureticiler,
-        file_name="yakin_ureticiler.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            excel_data_ureticiler = dataframe_to_excel_bytes(
+                yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]]
+            )
 
+            st.download_button(
+                label="Üreticileri Excel Olarak İndir",
+                data=excel_data_ureticiler,
+                file_name="yakin_ureticiler.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.info("Bu yarıçap içinde üretici bulunamadı.")
     else:
-    st.info("Bu yarıçap içinde üretici bulunamadı.")
+        st.warning("Üretici bulunamadı (TIPI alanını kontrol et).")
 
 st.divider()
 
@@ -445,28 +438,30 @@ else:
             .copy()
         )
 
-        st.write(f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_bufeler)}** en yakın büfe bilgisi aşağıda listelenmiştir:")
-
-    if len(yakin_bufeler) > 0:
-
-        st.dataframe(
-        yakin_bufeler[["BUFE_ADI","ILCE","MAHALLE","BOLGE","ADRES","MESAFE_KM","ENLEM","BOYLAM"]],
-        use_container_width=True
+        st.write(
+            f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_bufeler)}** en yakın büfe bilgisi aşağıda listelenmiştir:"
         )
 
-        excel_data = dataframe_to_excel_bytes(
-        yakin_bufeler[["BUFE_ADI","ILCE","MAHALLE","BOLGE","ADRES","MESAFE_KM","ENLEM","BOYLAM"]]
-        )
+        if len(yakin_bufeler) > 0:
+            st.dataframe(
+                yakin_bufeler[["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "MESAFE_KM", "ENLEM", "BOYLAM"]],
+                use_container_width=True
+            )
 
-        st.download_button(
-        label="Büfeleri Excel Olarak İndir",
-        data=excel_data,
-        file_name="yakin_bufeler.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-     
+            excel_data = dataframe_to_excel_bytes(
+                yakin_bufeler[["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "MESAFE_KM", "ENLEM", "BOYLAM"]]
+            )
 
+            st.download_button(
+                label="Büfeleri Excel Olarak İndir",
+                data=excel_data,
+                file_name="yakin_bufeler.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.info("Bu yarıçap içinde büfe bulunamadı.")
     else:
-    st.info("Bu yarıçap içinde büfe bulunamadı.")
+        st.warning("Büfe dosyasında geçerli koordinatlı kayıt bulunamadı.")
 
 st.divider()
 
@@ -527,54 +522,54 @@ if secili_magaza is None:
     bufe_group.add_to(m)
 
     legend_html = """
-<div style="
-    position: fixed;
-    bottom: 50px;
-    left: 50px;
-    z-index: 9999;
-    background-color: white;
-    border: 2px solid grey;
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-size: 14px;
-    box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-">
-    <div style="font-weight: bold; margin-bottom: 8px;">Harita Açıklaması</div>
-    <div style="margin-bottom: 6px;">
-        <span style="
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            background: red;
-            border-radius: 50%;
-            margin-right: 8px;
-        "></span>
-        Mağazalar
+    <div style="
+        position: fixed;
+        bottom: 50px;
+        left: 50px;
+        z-index: 9999;
+        background-color: white;
+        border: 2px solid grey;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 14px;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    ">
+        <div style="font-weight: bold; margin-bottom: 8px;">Harita Açıklaması</div>
+        <div style="margin-bottom: 6px;">
+            <span style="
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                background: red;
+                border-radius: 50%;
+                margin-right: 8px;
+            "></span>
+            Mağazalar
+        </div>
+        <div style="margin-bottom: 6px;">
+            <span style="
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                background: blue;
+                border-radius: 50%;
+                margin-right: 8px;
+            "></span>
+            Üreticiler
+        </div>
+        <div>
+            <span style="
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                background: green;
+                border-radius: 50%;
+                margin-right: 8px;
+            "></span>
+            Büfeler
+        </div>
     </div>
-    <div style="margin-bottom: 6px;">
-        <span style="
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            background: blue;
-            border-radius: 50%;
-            margin-right: 8px;
-        "></span>
-        Üreticiler
-    </div>
-    <div>
-        <span style="
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            background: green;
-            border-radius: 50%;
-            margin-right: 8px;
-        "></span>
-        Büfeler
-    </div>
-</div>
-"""
+    """
 
     m.get_root().html.add_child(folium.Element(legend_html))
 
