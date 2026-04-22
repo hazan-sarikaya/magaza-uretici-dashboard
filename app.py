@@ -6,6 +6,15 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from pathlib import Path
 
+from io import BytesIO
+
+def dataframe_to_excel_bytes(df):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Veri")
+    output.seek(0)
+    return output.getvalue()
+
 st.set_page_config(page_title="Mağaza & Üretici & Büfe Dashboard", layout="wide")
 
 
@@ -399,15 +408,24 @@ else:
 
         st.write(f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_ureticiler)}** en yakın üretici bilgisi aşağıda listelenmiştir:")
 
-        if len(yakin_ureticiler) > 0:
-            st.dataframe(
-                yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]],
-                use_container_width=True
-            )
-        else:
-            st.info("Bu yarıçap içinde üretici bulunamadı.")
+    if len(yakin_ureticiler) > 0:
+        st.dataframe(
+        yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]],
+        use_container_width=True
+        )
+
+        excel_data_ureticiler = dataframe_to_excel_bytes(
+        yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]]
+        )
+
+        st.download_button(
+        label="Üreticileri Excel Olarak İndir",
+        data=excel_data_ureticiler,
+        file_name="yakin_ureticiler.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
     else:
-        st.warning("Üretici bulunamadı (TIPI alanını kontrol et).")
+    st.info("Bu yarıçap içinde üretici bulunamadı.")
 
 st.divider()
 
@@ -429,15 +447,26 @@ else:
 
         st.write(f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_bufeler)}** en yakın büfe bilgisi aşağıda listelenmiştir:")
 
-        if len(yakin_bufeler) > 0:
-            st.dataframe(
-                yakin_bufeler[["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "MESAFE_KM", "ENLEM", "BOYLAM"]],
-                use_container_width=True
-            )
-        else:
-            st.info("Bu yarıçap içinde büfe bulunamadı.")
+    if len(yakin_bufeler) > 0:
+
+        st.dataframe(
+        yakin_bufeler[["BUFE_ADI","ILCE","MAHALLE","BOLGE","ADRES","MESAFE_KM","ENLEM","BOYLAM"]],
+        use_container_width=True
+        )
+
+        excel_data = dataframe_to_excel_bytes(
+        yakin_bufeler[["BUFE_ADI","ILCE","MAHALLE","BOLGE","ADRES","MESAFE_KM","ENLEM","BOYLAM"]]
+        )
+
+        st.download_button(
+        label="Büfeleri Excel Olarak İndir",
+        data=excel_data,
+        file_name="yakin_bufeler.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+     
+
     else:
-        st.warning("Büfe dosyasında geçerli koordinatlı kayıt bulunamadı.")
+    st.info("Bu yarıçap içinde büfe bulunamadı.")
 
 st.divider()
 
