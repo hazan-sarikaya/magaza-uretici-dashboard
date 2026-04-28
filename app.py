@@ -7,12 +7,17 @@ from streamlit_folium import st_folium
 from pathlib import Path
 from io import BytesIO
 
+
+# =========================
+# EXCEL EXPORT
+# =========================
 def dataframe_to_excel_bytes(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Veri")
     output.seek(0)
     return output.getvalue()
+
 
 st.set_page_config(page_title="Mağaza & Üretici & Büfe Dashboard", layout="wide")
 
@@ -285,339 +290,464 @@ for optional_col in ["IL", "ILCE", "ADRES"]:
 
 
 # =========================
-# OZET
+# SAYFA SECIMI
 # =========================
-st.subheader("Özet")
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Toplam kayıt", len(df))
-c2.metric("Mağaza", len(magazalar))
-c3.metric("Üretici", len(ureticiler))
-c4.metric("Büfe", len(bufeler))
-
-st.divider()
+sayfa = st.sidebar.radio(
+    "Sayfa Seç",
+    ["Tek Mağaza Analizi", "Tüm Mağazalar Analizi"]
+)
 
 
-# =========================
-# MAGAZA SECIMI
-# =========================
-st.subheader("Mağaza Seçimi")
+# =========================================================
+# SAYFA 1: TEK MAGAZA ANALIZI
+# =========================================================
+if sayfa == "Tek Mağaza Analizi":
 
-if len(magazalar) == 0:
-    st.error("Mağaza bulunamadı. TIPI alanında 'Magaza' yazdığından emin ol.")
-    st.stop()
+    # =========================
+    # OZET
+    # =========================
+    st.subheader("Özet")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Toplam kayıt", len(df))
+    c2.metric("Mağaza", len(magazalar))
+    c3.metric("Üretici", len(ureticiler))
+    c4.metric("Büfe", len(bufeler))
 
-m_df = magazalar.copy()
-m_df["CARI_ISIM"] = m_df["CARI_ISIM"].astype(str)
-m_df["CARI_KOD"] = m_df["CARI_KOD"].astype(str)
+    st.divider()
 
-arama = st.text_input(
-    "Mağaza adı veya kodunu yaz",
-    placeholder="Yazmaya başla... (örn: kurtuluş, A0002)"
-).strip()
+    # =========================
+    # MAGAZA SECIMI
+    # =========================
+    st.subheader("Mağaza Seçimi")
 
-secili_magaza = None
+    if len(magazalar) == 0:
+        st.error("Mağaza bulunamadı. TIPI alanında 'Magaza' yazdığından emin ol.")
+        st.stop()
 
-if arama:
-    arama_lower = arama.lower()
-    sonuc = m_df[
-        m_df["CARI_ISIM"].str.lower().str.contains(arama_lower, na=False) |
-        m_df["CARI_KOD"].str.lower().str.contains(arama_lower, na=False)
-    ].copy()
+    m_df = magazalar.copy()
+    m_df["CARI_ISIM"] = m_df["CARI_ISIM"].astype(str)
+    m_df["CARI_KOD"] = m_df["CARI_KOD"].astype(str)
 
-    if len(sonuc) == 0:
-        st.warning("Eşleşen mağaza bulunamadı. Aşağıda tüm Türkiye görünmeye devam eder.")
-    else:
-        secim_label = st.selectbox(
-            "Sonuçlar",
-            options=(sonuc["CARI_KOD"] + " | " + sonuc["CARI_ISIM"]).tolist(),
-            label_visibility="collapsed"
-        )
-        secili_kod = secim_label.split(" | ")[0].strip()
-        secili_magaza = magazalar[magazalar["CARI_KOD"].astype(str) == secili_kod].iloc[0]
+    arama = st.text_input(
+        "Mağaza adı veya kodunu yaz",
+        placeholder="Yazmaya başla... (örn: kurtuluş, A0002)"
+    ).strip()
 
-if secili_magaza is not None:
-    st.write("**Seçili mağaza bilgisi**")
-    st.dataframe(
-        pd.DataFrame([{
-            "CARI_KOD": secili_magaza["CARI_KOD"],
-            "CARI_ISIM": secili_magaza["CARI_ISIM"],
-            "IL": secili_magaza.get("IL", ""),
-            "ILCE": secili_magaza.get("ILCE", ""),
-            "ADRES": secili_magaza.get("ADRES", ""),
-            "ENLEM": secili_magaza["ENLEM"],
-            "BOYLAM": secili_magaza["BOYLAM"],
-        }]),
-        use_container_width=True
-    )
-else:
-    st.info("Mağaza seçili değil ise, tüm Türkiye görünür.")
+    secili_magaza = None
 
-st.divider()
+    if arama:
+        arama_lower = arama.lower()
+        sonuc = m_df[
+            m_df["CARI_ISIM"].str.lower().str.contains(arama_lower, na=False) |
+            m_df["CARI_KOD"].str.lower().str.contains(arama_lower, na=False)
+        ].copy()
 
-
-# =========================
-# PARAMETRELER
-# =========================
-st.subheader("Yakın Kayıt Ayarları")
-c1, c2 = st.columns(2)
-
-with c1:
-    top_n = st.selectbox("En yakın kaç kayıt gösterilsin?", options=[5, 10, 20, 50], index=1)
-
-with c2:
-    yaricap = st.slider("Yarıçap (km)", 1, 200, 30, 5)
-
-st.divider()
-
-
-# =========================
-# YAKIN KAYITLAR
-# =========================
-yakin_ureticiler = pd.DataFrame()
-yakin_bufeler = pd.DataFrame()
-
-st.subheader("Seçili Mağazanın Yakınındaki Üreticiler")
-
-if secili_magaza is None:
-    st.warning("Yakın üretici ve büfe bilgisi için önce mağaza seçmelisiniz.")
-else:
-    m_lat = float(secili_magaza["ENLEM"])
-    m_lon = float(secili_magaza["BOYLAM"])
-
-    if len(ureticiler) > 0:
-        u = ureticiler.copy()
-        u["MESAFE_KM"] = haversine_km(m_lat, m_lon, u["ENLEM"].values, u["BOYLAM"].values)
-
-        yakin_ureticiler = (
-            u[u["MESAFE_KM"] <= yaricap]
-            .sort_values("MESAFE_KM")
-            .head(top_n)
-            .copy()
-        )
-
-        st.write(
-            f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_ureticiler)}** en yakın üretici bilgisi aşağıda listelenmiştir:"
-        )
-
-        if len(yakin_ureticiler) > 0:
-            st.dataframe(
-                yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]],
-                use_container_width=True
-            )
-
-            excel_data_ureticiler = dataframe_to_excel_bytes(
-                yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]]
-            )
-
-            st.download_button(
-                label="Üreticileri Excel Olarak İndir",
-                data=excel_data_ureticiler,
-                file_name="yakin_ureticiler.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+        if len(sonuc) == 0:
+            st.warning("Eşleşen mağaza bulunamadı. Aşağıda tüm Türkiye görünmeye devam eder.")
         else:
-            st.info("Bu yarıçap içinde üretici bulunamadı.")
+            secim_label = st.selectbox(
+                "Sonuçlar",
+                options=(sonuc["CARI_KOD"] + " | " + sonuc["CARI_ISIM"]).tolist(),
+                label_visibility="collapsed"
+            )
+            secili_kod = secim_label.split(" | ")[0].strip()
+            secili_magaza = magazalar[magazalar["CARI_KOD"].astype(str) == secili_kod].iloc[0]
+
+    if secili_magaza is not None:
+        st.write("**Seçili mağaza bilgisi**")
+        st.dataframe(
+            pd.DataFrame([{
+                "CARI_KOD": secili_magaza["CARI_KOD"],
+                "CARI_ISIM": secili_magaza["CARI_ISIM"],
+                "IL": secili_magaza.get("IL", ""),
+                "ILCE": secili_magaza.get("ILCE", ""),
+                "ADRES": secili_magaza.get("ADRES", ""),
+                "ENLEM": secili_magaza["ENLEM"],
+                "BOYLAM": secili_magaza["BOYLAM"],
+            }]),
+            use_container_width=True
+        )
     else:
-        st.warning("Üretici bulunamadı (TIPI alanını kontrol et).")
+        st.info("Mağaza seçili değil ise, tüm Türkiye görünür.")
 
-st.divider()
+    st.divider()
 
-st.subheader("Seçili Mağazanın Yakınındaki Büfeler")
+    # =========================
+    # PARAMETRELER
+    # =========================
+    st.subheader("Yakın Kayıt Ayarları")
+    c1, c2 = st.columns(2)
 
-if secili_magaza is None:
-    st.warning("Yakın büfe bilgisi için önce mağaza seçmelisiniz.")
-else:
-    if len(bufeler) > 0:
-        b = bufeler.copy()
-        b["MESAFE_KM"] = haversine_km(m_lat, m_lon, b["ENLEM"].values, b["BOYLAM"].values)
+    with c1:
+        top_n = st.selectbox("En yakın kaç kayıt gösterilsin?", options=[5, 10, 20, 50], index=1)
 
-        yakin_bufeler = (
-            b[b["MESAFE_KM"] <= yaricap]
-            .sort_values("MESAFE_KM")
-            .head(top_n)
-            .copy()
-        )
+    with c2:
+        yaricap = st.slider("Yarıçap (km)", 1, 200, 30, 5)
 
-        st.write(
-            f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_bufeler)}** en yakın büfe bilgisi aşağıda listelenmiştir:"
-        )
+    st.divider()
 
-        if len(yakin_bufeler) > 0:
-            st.dataframe(
-                yakin_bufeler[["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "MESAFE_KM", "ENLEM", "BOYLAM"]],
-                use_container_width=True
+    # =========================
+    # YAKIN KAYITLAR
+    # =========================
+    yakin_ureticiler = pd.DataFrame()
+    yakin_bufeler = pd.DataFrame()
+
+    st.subheader("Seçili Mağazanın Yakınındaki Üreticiler")
+
+    if secili_magaza is None:
+        st.warning("Yakın üretici ve büfe bilgisi için önce mağaza seçmelisiniz.")
+    else:
+        m_lat = float(secili_magaza["ENLEM"])
+        m_lon = float(secili_magaza["BOYLAM"])
+
+        if len(ureticiler) > 0:
+            u = ureticiler.copy()
+            u["MESAFE_KM"] = haversine_km(m_lat, m_lon, u["ENLEM"].values, u["BOYLAM"].values)
+
+            yakin_ureticiler = (
+                u[u["MESAFE_KM"] <= yaricap]
+                .sort_values("MESAFE_KM")
+                .head(top_n)
+                .copy()
             )
 
-            excel_data = dataframe_to_excel_bytes(
-                yakin_bufeler[["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "MESAFE_KM", "ENLEM", "BOYLAM"]]
+            st.write(
+                f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_ureticiler)}** en yakın üretici bilgisi aşağıda listelenmiştir:"
             )
 
-            st.download_button(
-                label="Büfeleri Excel Olarak İndir",
-                data=excel_data,
-                file_name="yakin_bufeler.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            if len(yakin_ureticiler) > 0:
+                st.dataframe(
+                    yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]],
+                    use_container_width=True
+                )
+
+                excel_data_ureticiler = dataframe_to_excel_bytes(
+                    yakin_ureticiler[["CARI_KOD", "CARI_ISIM", "IL", "ILCE", "MESAFE_KM", "ENLEM", "BOYLAM"]]
+                )
+
+                st.download_button(
+                    label="Üreticileri Excel Olarak İndir",
+                    data=excel_data_ureticiler,
+                    file_name="yakin_ureticiler.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            else:
+                st.info("Bu yarıçap içinde üretici bulunamadı.")
         else:
-            st.info("Bu yarıçap içinde büfe bulunamadı.")
+            st.warning("Üretici bulunamadı (TIPI alanını kontrol et).")
+
+    st.divider()
+
+    st.subheader("Seçili Mağazanın Yakınındaki Büfeler")
+
+    if secili_magaza is None:
+        st.warning("Yakın büfe bilgisi için önce mağaza seçmelisiniz.")
     else:
-        st.warning("Büfe dosyasında geçerli koordinatlı kayıt bulunamadı.")
+        if len(bufeler) > 0:
+            b = bufeler.copy()
+            b["MESAFE_KM"] = haversine_km(m_lat, m_lon, b["ENLEM"].values, b["BOYLAM"].values)
 
-st.divider()
+            yakin_bufeler = (
+                b[b["MESAFE_KM"] <= yaricap]
+                .sort_values("MESAFE_KM")
+                .head(top_n)
+                .copy()
+            )
 
+            st.write(
+                f"Seçilen mağazaya **{yaricap} km** içinde **{len(yakin_bufeler)}** en yakın büfe bilgisi aşağıda listelenmiştir:"
+            )
 
-# =========================
-# HARITA
-# =========================
-st.subheader("Harita")
+            if len(yakin_bufeler) > 0:
+                st.dataframe(
+                    yakin_bufeler[["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "MESAFE_KM", "ENLEM", "BOYLAM"]],
+                    use_container_width=True
+                )
 
-if secili_magaza is None:
-    tr_center = [39.0, 35.0]
-    m = folium.Map(location=tr_center, zoom_start=6, tiles="OpenStreetMap")
+                excel_data = dataframe_to_excel_bytes(
+                    yakin_bufeler[["BUFE_ADI", "ILCE", "MAHALLE", "BOLGE", "ADRES", "MESAFE_KM", "ENLEM", "BOYLAM"]]
+                )
 
-    magaza_group = folium.FeatureGroup(name="Mağazalar")
-    uretici_group = folium.FeatureGroup(name="Üreticiler")
-    bufe_group = folium.FeatureGroup(name="Büfeler")
+                st.download_button(
+                    label="Büfeleri Excel Olarak İndir",
+                    data=excel_data,
+                    file_name="yakin_bufeler.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            else:
+                st.info("Bu yarıçap içinde büfe bulunamadı.")
+        else:
+            st.warning("Büfe dosyasında geçerli koordinatlı kayıt bulunamadı.")
 
-    cluster_magaza = MarkerCluster().add_to(magaza_group)
-    cluster_uretici = MarkerCluster().add_to(uretici_group)
+    st.divider()
 
-    for _, row in magazalar.sample(min(2000, len(magazalar)), random_state=1).iterrows():
-        folium.CircleMarker(
-            location=[float(row["ENLEM"]), float(row["BOYLAM"])],
-            radius=3,
+    # =========================
+    # HARİTA
+    # =========================
+    st.subheader("Harita")
+
+    if secili_magaza is None:
+        tr_center = [39.0, 35.0]
+        m = folium.Map(location=tr_center, zoom_start=6, tiles="OpenStreetMap")
+
+        magaza_group = folium.FeatureGroup(name="Mağazalar")
+        uretici_group = folium.FeatureGroup(name="Üreticiler")
+        bufe_group = folium.FeatureGroup(name="Büfeler")
+
+        cluster_magaza = MarkerCluster().add_to(magaza_group)
+        cluster_uretici = MarkerCluster().add_to(uretici_group)
+
+        for _, row in magazalar.sample(min(2000, len(magazalar)), random_state=1).iterrows():
+            folium.CircleMarker(
+                location=[float(row["ENLEM"]), float(row["BOYLAM"])],
+                radius=3,
+                color="red",
+                fill=True,
+                fill_opacity=0.7,
+                popup=f"Mağaza: {row.get('CARI_ISIM', '')}"
+            ).add_to(cluster_magaza)
+
+        for _, row in ureticiler.sample(min(2000, len(ureticiler)), random_state=1).iterrows():
+            folium.CircleMarker(
+                location=[float(row["ENLEM"]), float(row["BOYLAM"])],
+                radius=3,
+                color="blue",
+                fill=True,
+                fill_opacity=0.7,
+                popup=f"Üretici: {row.get('CARI_ISIM', '')}"
+            ).add_to(cluster_uretici)
+
+        for _, row in bufeler.iterrows():
+            folium.CircleMarker(
+                location=[float(row["ENLEM"]), float(row["BOYLAM"])],
+                radius=4,
+                color="green",
+                fill=True,
+                fill_opacity=0.85,
+                popup=(
+                    f"Büfe: {row.get('BUFE_ADI', '')}<br>"
+                    f"İlçe: {row.get('ILCE', '')}<br>"
+                    f"Mahalle: {row.get('MAHALLE', '')}<br>"
+                    f"Bölge: {row.get('BOLGE', '')}"
+                )
+            ).add_to(bufe_group)
+
+        magaza_group.add_to(m)
+        uretici_group.add_to(m)
+        bufe_group.add_to(m)
+
+        legend_html = """
+        <div style="
+            position: fixed;
+            bottom: 50px;
+            left: 50px;
+            z-index: 9999;
+            background-color: white;
+            border: 2px solid grey;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 14px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        ">
+            <div style="font-weight: bold; margin-bottom: 8px;">Harita Açıklaması</div>
+            <div style="margin-bottom: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; background: red; border-radius: 50%; margin-right: 8px;"></span>
+                Mağazalar
+            </div>
+            <div style="margin-bottom: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; background: blue; border-radius: 50%; margin-right: 8px;"></span>
+                Üreticiler
+            </div>
+            <div>
+                <span style="display: inline-block; width: 12px; height: 12px; background: green; border-radius: 50%; margin-right: 8px;"></span>
+                Büfeler
+            </div>
+        </div>
+        """
+
+        m.get_root().html.add_child(folium.Element(legend_html))
+
+        folium.LayerControl(collapsed=False).add_to(m)
+        st_folium(m, width=1200, height=650, returned_objects=[])
+
+    else:
+        m_lat = float(secili_magaza["ENLEM"])
+        m_lon = float(secili_magaza["BOYLAM"])
+
+        m = folium.Map(location=[m_lat, m_lon], zoom_start=11, tiles="OpenStreetMap")
+
+        folium.Marker(
+            [m_lat, m_lon],
+            popup=f"Mağaza: {secili_magaza['CARI_ISIM']}",
+            icon=folium.Icon(color="red"),
+        ).add_to(m)
+
+        folium.Circle(
+            location=[m_lat, m_lon],
+            radius=yaricap * 1000,
             color="red",
-            fill=True,
-            fill_opacity=0.7,
-            popup=f"Mağaza: {row.get('CARI_ISIM', '')}"
-        ).add_to(cluster_magaza)
+            fill=False,
+        ).add_to(m)
 
-    for _, row in ureticiler.sample(min(2000, len(ureticiler)), random_state=1).iterrows():
-        folium.CircleMarker(
-            location=[float(row["ENLEM"]), float(row["BOYLAM"])],
-            radius=3,
-            color="blue",
-            fill=True,
-            fill_opacity=0.7,
-            popup=f"Üretici: {row.get('CARI_ISIM', '')}"
-        ).add_to(cluster_uretici)
+        for _, row in yakin_ureticiler.iterrows():
+            folium.CircleMarker(
+                location=[float(row["ENLEM"]), float(row["BOYLAM"])],
+                radius=6,
+                popup=f"Üretici: {row['CARI_ISIM']} ({row['MESAFE_KM']:.1f} km)",
+                color="blue",
+                fill=True,
+                fill_opacity=0.85,
+            ).add_to(m)
 
-    for _, row in bufeler.iterrows():
-        folium.CircleMarker(
-            location=[float(row["ENLEM"]), float(row["BOYLAM"])],
-            radius=4,
-            color="green",
-            fill=True,
-            fill_opacity=0.85,
-            popup=(
-                f"Büfe: {row.get('BUFE_ADI', '')}<br>"
-                f"İlçe: {row.get('ILCE', '')}<br>"
-                f"Mahalle: {row.get('MAHALLE', '')}<br>"
-                f"Bölge: {row.get('BOLGE', '')}"
+        for _, row in yakin_bufeler.iterrows():
+            folium.CircleMarker(
+                location=[float(row["ENLEM"]), float(row["BOYLAM"])],
+                radius=6,
+                popup=(
+                    f"Büfe: {row['BUFE_ADI']} ({row['MESAFE_KM']:.1f} km)<br>"
+                    f"İlçe: {row.get('ILCE', '')}<br>"
+                    f"Mahalle: {row.get('MAHALLE', '')}<br>"
+                    f"Bölge: {row.get('BOLGE', '')}"
+                ),
+                color="green",
+                fill=True,
+                fill_opacity=0.85,
+            ).add_to(m)
+
+        st_folium(m, width=1200, height=650, returned_objects=[])
+
+
+# =========================================================
+# SAYFA 2: TUM MAGAZALAR ANALIZI
+# =========================================================
+elif sayfa == "Tüm Mağazalar Analizi":
+
+    st.subheader("Tüm Mağazalar İçin Yakınlık Analizi")
+
+    st.info(
+        "Bu sayfada mağaza seçmeden, tüm mağazalar için yakın üretici ve büfe listesi oluşturulur."
+    )
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        tum_top_n = st.selectbox(
+            "Her mağaza için en yakın kaç kayıt gelsin?",
+            options=[1, 3, 5, 10],
+            index=1
+        )
+
+    with c2:
+        tum_yaricap = st.slider(
+            "Yarıçap (km)",
+            min_value=1,
+            max_value=200,
+            value=30,
+            step=5
+        )
+
+    sadece_tip = st.multiselect(
+        "Rapor tipi",
+        options=["Üretici", "Büfe"],
+        default=["Üretici", "Büfe"]
+    )
+
+    analiz_baslat = st.button("Tüm Mağazalar İçin Analizi Başlat")
+
+    if analiz_baslat:
+        sonuclar = []
+
+        progress = st.progress(0)
+        toplam_magaza = len(magazalar)
+
+        for i, (_, magaza) in enumerate(magazalar.iterrows(), start=1):
+            m_lat = float(magaza["ENLEM"])
+            m_lon = float(magaza["BOYLAM"])
+
+            # Yakın üreticiler
+            if "Üretici" in sadece_tip and len(ureticiler) > 0:
+                u = ureticiler.copy()
+                u["MESAFE_KM"] = haversine_km(
+                    m_lat,
+                    m_lon,
+                    u["ENLEM"].values,
+                    u["BOYLAM"].values
+                )
+
+                yakin_u = (
+                    u[u["MESAFE_KM"] <= tum_yaricap]
+                    .sort_values("MESAFE_KM")
+                    .head(tum_top_n)
+                    .copy()
+                )
+
+                for _, row in yakin_u.iterrows():
+                    sonuclar.append({
+                        "MAGAZA_KOD": magaza.get("CARI_KOD", ""),
+                        "MAGAZA_ADI": magaza.get("CARI_ISIM", ""),
+                        "MAGAZA_IL": magaza.get("IL", ""),
+                        "MAGAZA_ILCE": magaza.get("ILCE", ""),
+                        "YAKIN_TIP": "Üretici",
+                        "YAKIN_KOD": row.get("CARI_KOD", ""),
+                        "YAKIN_AD": row.get("CARI_ISIM", ""),
+                        "YAKIN_IL": row.get("IL", ""),
+                        "YAKIN_ILCE": row.get("ILCE", ""),
+                        "MESAFE_KM": round(row.get("MESAFE_KM", 0), 2),
+                        "YAKIN_ENLEM": row.get("ENLEM", ""),
+                        "YAKIN_BOYLAM": row.get("BOYLAM", ""),
+                    })
+
+            # Yakın büfeler
+            if "Büfe" in sadece_tip and len(bufeler) > 0:
+                b = bufeler.copy()
+                b["MESAFE_KM"] = haversine_km(
+                    m_lat,
+                    m_lon,
+                    b["ENLEM"].values,
+                    b["BOYLAM"].values
+                )
+
+                yakin_b = (
+                    b[b["MESAFE_KM"] <= tum_yaricap]
+                    .sort_values("MESAFE_KM")
+                    .head(tum_top_n)
+                    .copy()
+                )
+
+                for _, row in yakin_b.iterrows():
+                    sonuclar.append({
+                        "MAGAZA_KOD": magaza.get("CARI_KOD", ""),
+                        "MAGAZA_ADI": magaza.get("CARI_ISIM", ""),
+                        "MAGAZA_IL": magaza.get("IL", ""),
+                        "MAGAZA_ILCE": magaza.get("ILCE", ""),
+                        "YAKIN_TIP": "Büfe",
+                        "YAKIN_KOD": "",
+                        "YAKIN_AD": row.get("BUFE_ADI", ""),
+                        "YAKIN_IL": "",
+                        "YAKIN_ILCE": row.get("ILCE", ""),
+                        "YAKIN_MAHALLE": row.get("MAHALLE", ""),
+                        "YAKIN_BOLGE": row.get("BOLGE", ""),
+                        "MESAFE_KM": round(row.get("MESAFE_KM", 0), 2),
+                        "YAKIN_ENLEM": row.get("ENLEM", ""),
+                        "YAKIN_BOYLAM": row.get("BOYLAM", ""),
+                    })
+
+            progress.progress(i / toplam_magaza)
+
+        sonuc_df = pd.DataFrame(sonuclar)
+
+        st.write(f"Toplam **{len(sonuc_df)}** yakın kayıt bulundu.")
+
+        if len(sonuc_df) > 0:
+            st.dataframe(sonuc_df, use_container_width=True)
+
+            excel_data = dataframe_to_excel_bytes(sonuc_df)
+
+            st.download_button(
+                label="Tüm Mağazalar Yakınlık Raporunu Excel Olarak İndir",
+                data=excel_data,
+                file_name="tum_magazalar_yakinlik_raporu.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-        ).add_to(bufe_group)
-
-    magaza_group.add_to(m)
-    uretici_group.add_to(m)
-    bufe_group.add_to(m)
-
-    legend_html = """
-    <div style="
-        position: fixed;
-        bottom: 50px;
-        left: 50px;
-        z-index: 9999;
-        background-color: white;
-        border: 2px solid grey;
-        border-radius: 10px;
-        padding: 12px 14px;
-        font-size: 14px;
-        box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-    ">
-        <div style="font-weight: bold; margin-bottom: 8px;">Harita Açıklaması</div>
-        <div style="margin-bottom: 6px;">
-            <span style="
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                background: red;
-                border-radius: 50%;
-                margin-right: 8px;
-            "></span>
-            Mağazalar
-        </div>
-        <div style="margin-bottom: 6px;">
-            <span style="
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                background: blue;
-                border-radius: 50%;
-                margin-right: 8px;
-            "></span>
-            Üreticiler
-        </div>
-        <div>
-            <span style="
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                background: green;
-                border-radius: 50%;
-                margin-right: 8px;
-            "></span>
-            Büfeler
-        </div>
-    </div>
-    """
-
-    m.get_root().html.add_child(folium.Element(legend_html))
-
-    folium.LayerControl(collapsed=False).add_to(m)
-    st_folium(m, width=1200, height=650, returned_objects=[])
-
-else:
-    m_lat = float(secili_magaza["ENLEM"])
-    m_lon = float(secili_magaza["BOYLAM"])
-
-    m = folium.Map(location=[m_lat, m_lon], zoom_start=11, tiles="OpenStreetMap")
-
-    folium.Marker(
-        [m_lat, m_lon],
-        popup=f"Mağaza: {secili_magaza['CARI_ISIM']}",
-        icon=folium.Icon(color="red"),
-    ).add_to(m)
-
-    folium.Circle(
-        location=[m_lat, m_lon],
-        radius=yaricap * 1000,
-        color="red",
-        fill=False,
-    ).add_to(m)
-
-    for _, row in yakin_ureticiler.iterrows():
-        folium.CircleMarker(
-            location=[float(row["ENLEM"]), float(row["BOYLAM"])],
-            radius=6,
-            popup=f"Üretici: {row['CARI_ISIM']} ({row['MESAFE_KM']:.1f} km)",
-            color="blue",
-            fill=True,
-            fill_opacity=0.85,
-        ).add_to(m)
-
-    for _, row in yakin_bufeler.iterrows():
-        folium.CircleMarker(
-            location=[float(row["ENLEM"]), float(row["BOYLAM"])],
-            radius=6,
-            popup=(
-                f"Büfe: {row['BUFE_ADI']} ({row['MESAFE_KM']:.1f} km)<br>"
-                f"İlçe: {row.get('ILCE', '')}<br>"
-                f"Mahalle: {row.get('MAHALLE', '')}<br>"
-                f"Bölge: {row.get('BOLGE', '')}"
-            ),
-            color="green",
-            fill=True,
-            fill_opacity=0.85,
-        ).add_to(m)
-
-    st_folium(m, width=1200, height=650, returned_objects=[])
+        else:
+            st.warning("Seçilen yarıçap içinde kayıt bulunamadı.")
